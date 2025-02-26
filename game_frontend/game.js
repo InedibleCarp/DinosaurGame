@@ -1,3 +1,8 @@
+// game.js - Updated to use SVG assets
+
+// If you're not using ES modules, remove this line
+// import Phaser from 'phaser';
+
 class DinoRunScene extends Phaser.Scene {
   constructor() {
     super({ key: 'DinoRunScene' });
@@ -7,19 +12,27 @@ class DinoRunScene extends Phaser.Scene {
   }
 
   preload() {
-    // Load assets here (make sure to add your assets in an "assets" folder)
-    this.load.image('dino', 'assets/dino.png');       // Your dino image
-    this.load.image('obstacle', 'assets/obstacle.png'); // Your obstacle image
-    this.load.image('ground', 'assets/ground.png');   // Add a ground image
+    // Preload SVG assets
+    // Note: Convert SVGs to PNG or use the path to your saved SVG files
+    this.load.svg('dino', 'assets/dino.svg');
+    this.load.svg('obstacle', 'assets/cactus.svg');
+    this.load.svg('ground', 'assets/ground.svg');
+    this.load.svg('sky', 'assets/sky.svg');
   }
 
   create() {
+    // Add sky background
+    this.add.image(400, 300, 'sky').setDisplaySize(800, 600);
+    
     // Create the ground
     this.ground = this.physics.add.staticGroup();
-    this.ground.create(400, 350, 'ground').setScale(2).refreshBody();
+    const ground = this.ground.create(400, 550, 'ground');
+    ground.setDisplaySize(800, 100);
+    ground.refreshBody();
     
     // Create the player (dino) sprite
-    this.player = this.physics.add.sprite(100, 300, 'dino');
+    this.player = this.physics.add.sprite(100, 500, 'dino');
+    this.player.setDisplaySize(60, 60);
     this.player.setCollideWorldBounds(true);
     this.player.setGravityY(800);
     this.player.setOrigin(0.5, 1);
@@ -122,7 +135,8 @@ class DinoRunScene extends Phaser.Scene {
     if (this.isGameOver) return;
     
     // Create an obstacle sprite at the right edge of the screen
-    const obstacle = this.obstacles.create(800, 310, 'obstacle');
+    const obstacle = this.obstacles.create(800, 510, 'obstacle');
+    obstacle.setDisplaySize(50, 80);
     obstacle.setOrigin(0.5, 1);
     obstacle.setVelocityX(-this.gameSpeed);
     obstacle.setImmovable(true);
@@ -159,12 +173,76 @@ class DinoRunScene extends Phaser.Scene {
   }
 }
 
+class MainMenuScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'MainMenuScene' });
+  }
+  
+  preload() {
+    this.load.svg('sky', 'assets/sky.svg');
+  }
+  
+  create() {
+    // Add sky background
+    this.add.image(400, 300, 'sky').setDisplaySize(800, 600);
+    
+    // Title
+    this.add.text(400, 150, 'DINO RUN', { 
+      fontSize: '64px', 
+      fill: '#000',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    // Play button
+    const playButton = this.add.text(400, 250, 'PLAY', { 
+      fontSize: '32px', 
+      fill: '#000',
+      backgroundColor: '#E0E0E0',
+      padding: { left: 20, right: 20, top: 10, bottom: 10 }
+    }).setOrigin(0.5).setInteractive();
+    
+    playButton.on('pointerdown', () => {
+      this.scene.start('DinoRunScene');
+    });
+    
+    // Leaderboard button
+    const leaderboardButton = this.add.text(400, 320, 'LEADERBOARD', { 
+      fontSize: '32px', 
+      fill: '#000',
+      backgroundColor: '#E0E0E0',
+      padding: { left: 20, right: 20, top: 10, bottom: 10 }
+    }).setOrigin(0.5).setInteractive();
+    
+    leaderboardButton.on('pointerdown', () => {
+      this.scene.start('LeaderboardScene');
+    });
+    
+    // Instructions
+    this.add.text(400, 400, 'Press SPACE to jump', { 
+      fontSize: '24px', 
+      fill: '#000' 
+    }).setOrigin(0.5);
+    
+    // Keyboard input as alternative
+    this.input.keyboard.addKey('SPACE').on('down', () => {
+      this.scene.start('DinoRunScene');
+    });
+  }
+}
+
 class LeaderboardScene extends Phaser.Scene {
   constructor() {
     super({ key: 'LeaderboardScene' });
   }
   
+  preload() {
+    this.load.svg('sky', 'assets/sky.svg');
+  }
+  
   create() {
+    // Add sky background
+    this.add.image(400, 300, 'sky').setDisplaySize(800, 600);
+    
     this.add.text(400, 50, 'LEADERBOARD', { 
       fontSize: '36px', 
       fill: '#000',
@@ -219,56 +297,6 @@ class LeaderboardScene extends Phaser.Scene {
   }
 }
 
-class MainMenuScene extends Phaser.Scene {
-  constructor() {
-    super({ key: 'MainMenuScene' });
-  }
-  
-  create() {
-    // Title
-    this.add.text(400, 150, 'DINO RUN', { 
-      fontSize: '64px', 
-      fill: '#000',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
-    
-    // Play button
-    const playButton = this.add.text(400, 250, 'PLAY', { 
-      fontSize: '32px', 
-      fill: '#000',
-      backgroundColor: '#E0E0E0',
-      padding: { left: 20, right: 20, top: 10, bottom: 10 }
-    }).setOrigin(0.5).setInteractive();
-    
-    playButton.on('pointerdown', () => {
-      this.scene.start('DinoRunScene');
-    });
-    
-    // Leaderboard button
-    const leaderboardButton = this.add.text(400, 320, 'LEADERBOARD', { 
-      fontSize: '32px', 
-      fill: '#000',
-      backgroundColor: '#E0E0E0',
-      padding: { left: 20, right: 20, top: 10, bottom: 10 }
-    }).setOrigin(0.5).setInteractive();
-    
-    leaderboardButton.on('pointerdown', () => {
-      this.scene.start('LeaderboardScene');
-    });
-    
-    // Instructions
-    this.add.text(400, 400, 'Press SPACE to jump', { 
-      fontSize: '24px', 
-      fill: '#000' 
-    }).setOrigin(0.5);
-    
-    // Keyboard input as alternative
-    this.input.keyboard.addKey('SPACE').on('down', () => {
-      this.scene.start('DinoRunScene');
-    });
-  }
-}
-
 const config = {
   type: Phaser.AUTO,
   width: 800,
@@ -283,4 +311,5 @@ const config = {
   scene: [MainMenuScene, DinoRunScene, LeaderboardScene]
 };
 
+// If you're using script tags instead of modules, uncomment this line
 const game = new Phaser.Game(config);

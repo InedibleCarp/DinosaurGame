@@ -1,4 +1,4 @@
-// scoreModal.js
+// scoreModal.js - Modified for non-module use
 class ScoreModal {
     constructor(scene, score) {
       this.scene = scene;

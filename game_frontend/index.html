@@ -14,7 +14,23 @@
       justify-content: center;
       height: 100vh;
     }
-    /* Other styles from the artifact */
+    
+    #game-container {
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+      background-color: white;
+    }
+    
+    h1 {
+      color: #333;
+      margin-bottom: 20px;
+    }
+    
+    .instructions {
+      margin-top: 20px;
+      text-align: center;
+      max-width: 800px;
+      color: #666;
+    }
   </style>
   <!-- Include Phaser via CDN -->
   <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
@@ -26,8 +42,10 @@
     <p>Press SPACE to jump over obstacles. Submit your high score to the leaderboard!</p>
   </div>
   
-  <!-- Include your game files with regular script tags -->
+  <!-- Include score modal JS first (no export) -->
   <script src="./scoreModal.js"></script>
+  
+  <!-- Include main game JS -->
   <script src="./game.js"></script>
 </body>
 </html>

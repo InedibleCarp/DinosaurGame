@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- T-Rex Dinosaur - Improved Design -->
+  <g>
+    <!-- Body -->
+    <path d="M65,50 L75,50 C78,50 80,48 80,45 L80,40 C80,37 78,35 75,35 L60,35 C58,35 57,34 57,32 L57,25 C57,22 55,20 52,20 L50,20 C47,20 45,22 45,25 L45,35 L30,35 C27,35 25,37 25,40 L25,45 C25,48 27,50 30,50 L40,50" 
+          fill="#5D9E3E" stroke="#2E5E1F" stroke-width="1.5"/>
+    
+    <!-- Neck -->
+    <path d="M75,35 L85,25 C87,23 87,20 85,18 L82,15 C80,13 77,13 75,15 L65,25" 
+          fill="#5D9E3E" stroke="#2E5E1F" stroke-width="1.5"/>
+    
+    <!-- Head -->
+    <path d="M82,15 L88,12 C90,11 92,12 93,14 L95,17 C96,19 95,21 93,22 L85,25" 
+          fill="#5D9E3E" stroke="#2E5E1F" stroke-width="1.5"/>
+    
+    <!-- Jaw -->
+    <path d="M85,25 L90,26 C92,26.5 93,28 92,30 L90,32 C89,34 87,34 85,33 L80,30" 
+          fill="#5D9E3E" stroke="#2E5E1F" stroke-width="1.5"/>
+    
+    <!-- Eye -->
+    <circle cx="89" cy="16" r="2" fill="white" stroke="#2E5E1F" stroke-width="0.5"/>
+    <circle cx="89" cy="16" r="1" fill="black"/>
+    
+    <!-- Tail -->
+    <path d="M40,50 L20,55 C18,55.5 16,54 15.5,52 L15,49 C14.5,47 16,45 18,44.5 L25,43 L25,40" 
+          fill="#5D9E3E" stroke="#2E5E1F" stroke-width="1.5"/>
+    
+    <!-- Front Arm -->
+    <path d="M60,35 L62,45 C62.5,47 61,49 59,49.5 L56,50 C54,50.5 52,49 51.5,47 L50,40" 
+          fill="#5D9E3E" stroke="#2E5E1F" stroke-width="1.5"/>
+    
+    <!-- Back Leg -->
+    <path d="M30,50 L25,70 C24.5,72 25,74 27,74.5 L29,75 C31,75.5 33,74 33.5,72 L35,60" 
+          fill="#5D9E3E" stroke="#2E5E1F" stroke-width="1.5"/>
+    
+    <!-- Front Leg -->
+    <path d="M65,50 L60,70 C59.5,72 60,74 62,74.5 L64,75 C66,75.5 68,74 68.5,72 L70,60" 
+          fill="#5D9E3E" stroke="#2E5E1F" stroke-width="1.5"/>
+    
+    <!-- Foot details -->
+    <path d="M25,70 L20,73 L27,74.5 M60,70 L55,73 L62,74.5" 
+          fill="none" stroke="#2E5E1F" stroke-width="1"/>
+    
+    <!-- Back details -->
+    <path d="M52,20 L50,15 L47,20 M57,25 L60,20 L55,22" 
+          fill="none" stroke="#2E5E1F" stroke-width="1"/>
+  </g>
+</svg>
