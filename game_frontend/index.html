@@ -2,15 +2,32 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Dino Run Clone</title>
+  <title>Dino Run Game</title>
   <style>
     body {
       margin: 0;
-      overflow: hidden;
+      background-color: #f5f5f5;
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
     }
+    /* Other styles from the artifact */
   </style>
+  <!-- Include Phaser via CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.55.2/dist/phaser.min.js"></script>
 </head>
 <body>
-  <script src="./game.js" type="module"></script>
+  <h1>Dino Run</h1>
+  <div id="game-container"></div>
+  <div class="instructions">
+    <p>Press SPACE to jump over obstacles. Submit your high score to the leaderboard!</p>
+  </div>
+  
+  <!-- Include your game files with regular script tags -->
+  <script src="./scoreModal.js"></script>
+  <script src="./game.js"></script>
 </body>
 </html>
