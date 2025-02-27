@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600">
+  <!-- Night Sky Background with Gradient -->
+  <defs>
+    <linearGradient id="nightSkyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#0A1632" />
+      <stop offset="40%" stop-color="#1A2B50" />
+      <stop offset="100%" stop-color="#2A3B60" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Background Rectangle -->
+  <rect width="800" height="600" fill="url(#nightSkyGradient)" />
+</svg>
