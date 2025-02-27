@@ -1,4 +1,4 @@
-// Fixed game.js with corrected parallax scrolling
+// Game.js with Day/Night Cycle
 
 // If you're using script tags instead of modules, comment out this line
 // import Phaser from 'phaser';
@@ -13,6 +13,13 @@ class DinoRunScene extends Phaser.Scene {
     // Properties for parallax
     this.backgroundLayers = [];
     this.parallaxSpeeds = [0.2, 0.4, 0.6, 1.0]; // Adjusted speeds - ground moves at full speed
+    
+    // Day/Night cycle properties
+    this.timeOfDay = 'day';
+    this.cycleTimer = 0;
+    this.cycleDuration = 30000; // 30 seconds per cycle
+    this.dayNightRatio = 0.7; // 70% day, 30% night
+    this.transitionDuration = 5000; // 5 seconds for transition
   }
 
   preload() {
@@ -21,16 +28,44 @@ class DinoRunScene extends Phaser.Scene {
     this.load.svg('obstacle', 'assets/cactus.svg');
     this.load.svg('ground', 'assets/ground.svg');
     this.load.svg('sky', 'assets/sky.svg');
+    this.load.svg('sky-night', 'assets/sky-night.svg'); // Load night sky
     
     // New parallax assets
     this.load.svg('mountains', 'assets/mountains.svg');
+    this.load.svg('mountains-night', 'assets/mountains-night.svg'); // Load night mountains
     this.load.svg('clouds', 'assets/clouds.svg');
+    this.load.svg('clouds-night', 'assets/clouds-night.svg'); // Load night clouds
     this.load.svg('bushes', 'assets/bushes.svg');
+    this.load.svg('bushes-night', 'assets/bushes-night.svg'); // Load night bushes
+    this.load.svg('moon', 'assets/moon.svg'); // Load moon
+    this.load.svg('stars', 'assets/stars.svg'); // Load stars
   }
 
   create() {
-    // Add sky background (static, doesn't move)
-    this.add.image(400, 300, 'sky').setDisplaySize(800, 600);
+    // Create day/night container for background elements
+    this.backgroundContainer = this.add.container(0, 0);
+    
+    // Add sky background (day version first)
+    this.skyDay = this.add.image(400, 300, 'sky').setDisplaySize(800, 600);
+    this.skyNight = this.add.image(400, 300, 'sky-night').setDisplaySize(800, 600);
+    this.skyNight.setAlpha(0); // Start with day sky
+    
+    this.backgroundContainer.add(this.skyDay);
+    this.backgroundContainer.add(this.skyNight);
+    
+    // Add sun and moon
+    this.sun = this.add.image(680, 80, 'clouds').setDisplaySize(80, 80);
+    this.sun.setTint(0xFFD700); // Make it yellow
+    this.moon = this.add.image(680, 80, 'moon').setDisplaySize(60, 60);
+    this.moon.setAlpha(0); // Start with sun visible
+    
+    this.backgroundContainer.add(this.sun);
+    this.backgroundContainer.add(this.moon);
+    
+    // Add stars (invisible during day)
+    this.stars = this.add.image(400, 150, 'stars').setDisplaySize(800, 300);
+    this.stars.setAlpha(0);
+    this.backgroundContainer.add(this.stars);
     
     // Create parallax layers
     this.createParallaxBackground();
@@ -61,6 +96,12 @@ class DinoRunScene extends Phaser.Scene {
     // Create score text
     this.scoreText = this.add.text(16, 16, 'Score: 0', { 
       fontSize: '24px', 
+      fill: '#000' 
+    });
+    
+    // Create time of day indicator
+    this.timeText = this.add.text(16, 50, 'Day', { 
+      fontSize: '20px', 
       fill: '#000' 
     });
     
@@ -96,65 +137,169 @@ class DinoRunScene extends Phaser.Scene {
       callbackScope: this,
       loop: true
     });
+    
+    // Create day/night overlay for gradual transitions
+    this.dayNightOverlay = this.add.rectangle(400, 300, 800, 600, 0x000000, 0);
   }
   
   // Create parallax background layers
   createParallaxBackground() {
-    // Layer 1: Distant mountains (slowest)
-    // Positioned higher up to align with ground
-    this.createParallaxLayer('mountains', 400, 470, 800, 150, 0);
+    // Create paired layers for day and night
     
-    // Layer 2: Far clouds
-    this.createParallaxLayer('clouds', 400, 200, 800, 100, 1);
+    // Layer 1: Mountains
+    const mountainsDay = this.createParallaxLayerPair('mountains', 'mountains-night', 400, 470, 800, 150, 0);
     
-    // Layer 3: Bushes (closer to player)
-    this.createParallaxLayer('bushes', 400, 520, 800, 80, 2);
+    // Layer 2: Clouds
+    const cloudsDay = this.createParallaxLayerPair('clouds', 'clouds-night', 400, 200, 800, 100, 1);
     
-    // Ground layer (fastest - should match obstacle speed)
-    this.groundLayer = this.createParallaxLayer('ground', 400, 550, 800, 100, 3);
+    // Layer 3: Bushes
+    const bushesDay = this.createParallaxLayerPair('bushes', 'bushes-night', 400, 520, 800, 80, 2);
+    
+    // Ground layer
+    this.groundLayer = this.createParallaxLayerPair('ground', 'ground', 400, 550, 800, 100, 3);
   }
   
-  // Helper method to create each layer - FIXED to prevent disappearing
-  createParallaxLayer(key, x, y, width, height, layerIndex) {
-    // Create three copies of the same image side by side instead of two
-    // This prevents gaps appearing during scrolling
-    const layer1 = this.add.image(x - width, y, key).setDisplaySize(width, height);
-    const layer2 = this.add.image(x, y, key).setDisplaySize(width, height);
-    const layer3 = this.add.image(x + width, y, key).setDisplaySize(width, height);
+  // Helper method to create pairs of day and night layers
+  createParallaxLayerPair(dayKey, nightKey, x, y, width, height, layerIndex) {
+    // Create three copies of day and night images
+    const dayImages = [];
+    const nightImages = [];
     
-    // Store all three images as a layer group
+    for (let i = -1; i <= 1; i++) {
+      const dayImg = this.add.image(x + (i * width), y, dayKey).setDisplaySize(width, height);
+      const nightImg = this.add.image(x + (i * width), y, nightKey).setDisplaySize(width, height);
+      
+      // Start with night images invisible
+      nightImg.setAlpha(0);
+      
+      dayImages.push(dayImg);
+      nightImages.push(nightImg);
+      
+      this.backgroundContainer.add(dayImg);
+      this.backgroundContainer.add(nightImg);
+    }
+    
+    // Store both day and night images as a layer group
     const layerGroup = { 
-      images: [layer1, layer2, layer3],
+      dayImages: dayImages,
+      nightImages: nightImages,
       speed: this.parallaxSpeeds[layerIndex] * this.gameSpeed,
       width: width,
-      x: x,  // Store initial x position for reset
-      y: y   // Store y position for reset
+      x: x,
+      y: y
     };
     
     this.backgroundLayers.push(layerGroup);
     return layerGroup;
   }
   
-  // Update parallax layers - FIXED to ensure continuous scrolling
+  // Update parallax layers
   updateParallaxLayers() {
     // Update each layer
     this.backgroundLayers.forEach(layer => {
-      // Move all images of the layer
-      layer.images.forEach(image => {
-        // Move the image based on its speed
-        image.x -= layer.speed * (1/60); // Adjust for framerate
-      });
+      // Helper function to update a set of images
+      const updateImages = (images) => {
+        // Move all images of the layer
+        images.forEach(image => {
+          // Move the image based on its speed
+          image.x -= layer.speed * (1/60);
+        });
+        
+        // Get the leftmost and rightmost images
+        const sortedImages = [...images].sort((a, b) => a.x - b.x);
+        const leftmost = sortedImages[0];
+        const rightmost = sortedImages[sortedImages.length - 1];
+        
+        // If the leftmost image has moved too far left
+        if (leftmost.x < -layer.width) {
+          // Place it to the right of the rightmost image
+          leftmost.x = rightmost.x + layer.width;
+        }
+      };
       
-      // Get the leftmost and rightmost images
-      const sortedImages = [...layer.images].sort((a, b) => a.x - b.x);
-      const leftmost = sortedImages[0];
-      const rightmost = sortedImages[sortedImages.length - 1];
+      // Update both day and night versions
+      updateImages(layer.dayImages);
+      updateImages(layer.nightImages);
+    });
+  }
+  
+  // Update day/night cycle
+  updateDayNightCycle(delta) {
+    this.cycleTimer += delta;
+    
+    // Reset timer if it exceeds the cycle duration
+    if (this.cycleTimer >= this.cycleDuration) {
+      this.cycleTimer = 0;
+    }
+    
+    // Calculate the transition progress
+    const dayDuration = this.cycleDuration * this.dayNightRatio;
+    const nightDuration = this.cycleDuration - dayDuration;
+    
+    let nightAlpha = 0;
+    
+    // During day-to-night transition
+    if (this.cycleTimer > dayDuration - this.transitionDuration && 
+        this.cycleTimer < dayDuration) {
+      const transitionProgress = (this.cycleTimer - (dayDuration - this.transitionDuration)) / this.transitionDuration;
+      nightAlpha = transitionProgress;
       
-      // If the leftmost image has moved too far left
-      if (leftmost.x < -layer.width) {
-        // Place it to the right of the rightmost image
-        leftmost.x = rightmost.x + layer.width;
+      // Update time indicator
+      if (this.timeOfDay === 'day' && transitionProgress > 0.5) {
+        this.timeOfDay = 'dusk';
+        this.timeText.setText('Dusk');
       }
+    }
+    // During full night
+    else if (this.cycleTimer >= dayDuration && 
+             this.cycleTimer < this.cycleDuration - this.transitionDuration) {
+      nightAlpha = 1;
+      
+      // Update time indicator
+      if (this.timeOfDay !== 'night') {
+        this.timeOfDay = 'night';
+        this.timeText.setText('Night');
+        this.timeText.setFill('#FFFFFF');
+        this.scoreText.setFill('#FFFFFF');
+      }
+    }
+    // During night-to-day transition
+    else if (this.cycleTimer >= this.cycleDuration - this.transitionDuration) {
+      const transitionProgress = (this.cycleTimer - (this.cycleDuration - this.transitionDuration)) / this.transitionDuration;
+      nightAlpha = 1 - transitionProgress;
+      
+      // Update time indicator
+      if (this.timeOfDay === 'night' && transitionProgress > 0.5) {
+        this.timeOfDay = 'dawn';
+        this.timeText.setText('Dawn');
+      }
+    }
+    // During full day
+    else {
+      nightAlpha = 0;
+      
+      // Update time indicator
+      if (this.timeOfDay !== 'day' && this.timeOfDay !== '') {
+        this.timeOfDay = 'day';
+        this.timeText.setText('Day');
+        this.timeText.setFill('#000000');
+        this.scoreText.setFill('#000000');
+      }
+    }
+    
+    // Apply the alpha to all night elements
+    this.skyNight.setAlpha(nightAlpha);
+    this.stars.setAlpha(nightAlpha * 0.8); // Stars are slightly less visible
+    
+    // Transition sun and moon
+    this.sun.setAlpha(1 - nightAlpha);
+    this.moon.setAlpha(nightAlpha);
+    
+    // Update all background layers
+    this.backgroundLayers.forEach(layer => {
+      layer.nightImages.forEach(image => {
+        image.setAlpha(nightAlpha);
+      });
     });
   }
   
@@ -227,6 +372,11 @@ class DinoRunScene extends Phaser.Scene {
     obstacle.setVelocityX(-this.gameSpeed);
     obstacle.setImmovable(true);
     
+    // Tint the obstacle at night
+    if (this.timeOfDay === 'night') {
+      obstacle.setTint(0x555555);
+    }
+    
     // Schedule next obstacle
     this.obstacleTimer = this.time.addEvent({
       delay: Phaser.Math.Between(1500, 3000),
@@ -236,11 +386,14 @@ class DinoRunScene extends Phaser.Scene {
     });
   }
 
-  update() {
+  update(time, delta) {
     // Only update if game is not over
     if (!this.isGameOver) {
       // Update parallax layers
       this.updateParallaxLayers();
+      
+      // Update day/night cycle
+      this.updateDayNightCycle(delta);
       
       // Jump only when on ground
       if (this.jumpKey.isDown && this.player.body.touching.down) {
@@ -264,17 +417,30 @@ class DinoRunScene extends Phaser.Scene {
     });
   }
   
-  // New method to reset the game scene
+  // Reset the game scene
   resetScene() {
     // Reset all layers to their original positions
     this.backgroundLayers.forEach(layer => {
-      layer.images[0].x = layer.x - layer.width;
-      layer.images[1].x = layer.x;
-      layer.images[2].x = layer.x + layer.width;
+      for (let i = 0; i < 3; i++) {
+        layer.dayImages[i].x = layer.x + ((i-1) * layer.width);
+        layer.nightImages[i].x = layer.x + ((i-1) * layer.width);
+      }
     });
+    
+    // Reset day/night cycle
+    this.cycleTimer = 0;
+    this.timeOfDay = 'day';
+    
+    // Reset visuals
+    this.skyDay.setAlpha(1);
+    this.skyNight.setAlpha(0);
+    this.sun.setAlpha(1);
+    this.moon.setAlpha(0);
+    this.stars.setAlpha(0);
   }
 }
 
+// Rest of the code remains the same (LeaderboardScene and MainMenuScene)
 class LeaderboardScene extends Phaser.Scene {
   constructor() {
     super({ key: 'LeaderboardScene' });
