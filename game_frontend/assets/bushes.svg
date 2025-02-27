@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 80">
+  <!-- Bushes and Vegetation Background -->
+  <defs>
+    <linearGradient id="bushGradient1" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#4CAF50" />
+      <stop offset="100%" stop-color="#388E3C" />
+    </linearGradient>
+    <linearGradient id="bushGradient2" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#7CB342" />
+      <stop offset="100%" stop-color="#558B2F" />
+    </linearGradient>
+    <linearGradient id="cactusGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#2E8B57" />
+      <stop offset="100%" stop-color="#1B5E20" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Bush Group 1 -->
+  <path d="M20,80 C10,80 0,70 0,60 C0,50 10,40 20,40 C25,40 30,42 33,46 C35,38 42,32 50,32 C58,32 65,38 67,46 C70,42 75,40 80,40 C90,40 100,50 100,60 C100,70 90,80 80,80 Z" 
+        fill="url(#bushGradient1)"/>
+  
+  <!-- Bush Group 2 -->
+  <path d="M150,80 C140,80 130,70 130,60 C130,50 140,40 150,40 C155,40 160,42 163,46 C165,38 172,32 180,32 C188,32 195,38 197,46 C200,42 205,40 210,40 C220,40 230,50 230,60 C230,70 220,80 210,80 Z" 
+        fill="url(#bushGradient2)" transform="scale(0.8)"/>
+  
+  <!-- Small Cactus 1 -->
+  <path d="M280,80 L280,45 L270,45 L270,35 L280,35 L280,20 L290,20 L290,35 L300,35 L300,45 L290,45 L290,80 Z" 
+        fill="url(#cactusGradient)" transform="scale(0.7)"/>
+  
+  <!-- Bush Group 3 -->
+  <path d="M350,80 C340,80 330,70 330,60 C330,50 340,40 350,40 C355,40 360,42 363,46 C365,38 372,32 380,32 C388,32 395,38 397,46 C400,42 405,40 410,40 C420,40 430,50 430,60 C430,70 420,80 410,80 Z" 
+        fill="url(#bushGradient1)" transform="scale(0.9)"/>
+  
+  <!-- Small Cactus 2 -->
+  <path d="M480,80 L480,45 L470,45 L470,35 L480,35 L480,20 L490,20 L490,35 L500,35 L500,45 L490,45 L490,80 Z" 
+        fill="url(#cactusGradient)" transform="scale(0.6)"/>
+  
+  <!-- Bush Group 4 -->
+  <path d="M550,80 C540,80 530,70 530,60 C530,50 540,40 550,40 C555,40 560,42 563,46 C565,38 572,32 580,32 C588,32 595,38 597,46 C600,42 605,40 610,40 C620,40 630,50 630,60 C630,70 620,80 610,80 Z" 
+        fill="url(#bushGradient2)"/>
+  
+  <!-- Bush Group 5 -->
+  <path d="M700,80 C690,80 680,70 680,60 C680,50 690,40 700,40 C705,40 710,42 713,46 C715,38 722,32 730,32 C738,32 745,38 747,46 C750,42 755,40 760,40 C770,40 780,50 780,60 C780,70 770,80 760,80 Z" 
+        fill="url(#bushGradient1)" transform="scale(0.75)"/>
+</svg>
