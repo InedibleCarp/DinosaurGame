@@ -1,6 +1,6 @@
-// game.js - Updated to use SVG assets
+// Fixed game.js with corrected parallax scrolling
 
-// If you're not using ES modules, remove this line
+// If you're using script tags instead of modules, comment out this line
 // import Phaser from 'phaser';
 
 class DinoRunScene extends Phaser.Scene {
@@ -9,26 +9,38 @@ class DinoRunScene extends Phaser.Scene {
     this.score = 0;
     this.isGameOver = false;
     this.gameSpeed = 200;
+    
+    // Properties for parallax
+    this.backgroundLayers = [];
+    this.parallaxSpeeds = [0.2, 0.4, 0.6, 1.0]; // Adjusted speeds - ground moves at full speed
   }
 
   preload() {
-    // Preload SVG assets
-    // Note: Convert SVGs to PNG or use the path to your saved SVG files
+    // Load assets
     this.load.svg('dino', 'assets/dino.svg');
     this.load.svg('obstacle', 'assets/cactus.svg');
     this.load.svg('ground', 'assets/ground.svg');
     this.load.svg('sky', 'assets/sky.svg');
+    
+    // New parallax assets
+    this.load.svg('mountains', 'assets/mountains.svg');
+    this.load.svg('clouds', 'assets/clouds.svg');
+    this.load.svg('bushes', 'assets/bushes.svg');
   }
 
   create() {
-    // Add sky background
+    // Add sky background (static, doesn't move)
     this.add.image(400, 300, 'sky').setDisplaySize(800, 600);
     
-    // Create the ground
+    // Create parallax layers
+    this.createParallaxBackground();
+    
+    // Create the ground physics
     this.ground = this.physics.add.staticGroup();
-    const ground = this.ground.create(400, 550, 'ground');
-    ground.setDisplaySize(800, 100);
-    ground.refreshBody();
+    const groundSprite = this.ground.create(400, 550, 'ground');
+    groundSprite.setVisible(false); // Hide the actual physics ground
+    groundSprite.setDisplaySize(800, 100);
+    groundSprite.refreshBody();
     
     // Create the player (dino) sprite
     this.player = this.physics.add.sprite(100, 500, 'dino');
@@ -86,6 +98,66 @@ class DinoRunScene extends Phaser.Scene {
     });
   }
   
+  // Create parallax background layers
+  createParallaxBackground() {
+    // Layer 1: Distant mountains (slowest)
+    // Positioned higher up to align with ground
+    this.createParallaxLayer('mountains', 400, 470, 800, 150, 0);
+    
+    // Layer 2: Far clouds
+    this.createParallaxLayer('clouds', 400, 200, 800, 100, 1);
+    
+    // Layer 3: Bushes (closer to player)
+    this.createParallaxLayer('bushes', 400, 520, 800, 80, 2);
+    
+    // Ground layer (fastest - should match obstacle speed)
+    this.groundLayer = this.createParallaxLayer('ground', 400, 550, 800, 100, 3);
+  }
+  
+  // Helper method to create each layer - FIXED to prevent disappearing
+  createParallaxLayer(key, x, y, width, height, layerIndex) {
+    // Create three copies of the same image side by side instead of two
+    // This prevents gaps appearing during scrolling
+    const layer1 = this.add.image(x - width, y, key).setDisplaySize(width, height);
+    const layer2 = this.add.image(x, y, key).setDisplaySize(width, height);
+    const layer3 = this.add.image(x + width, y, key).setDisplaySize(width, height);
+    
+    // Store all three images as a layer group
+    const layerGroup = { 
+      images: [layer1, layer2, layer3],
+      speed: this.parallaxSpeeds[layerIndex] * this.gameSpeed,
+      width: width,
+      x: x,  // Store initial x position for reset
+      y: y   // Store y position for reset
+    };
+    
+    this.backgroundLayers.push(layerGroup);
+    return layerGroup;
+  }
+  
+  // Update parallax layers - FIXED to ensure continuous scrolling
+  updateParallaxLayers() {
+    // Update each layer
+    this.backgroundLayers.forEach(layer => {
+      // Move all images of the layer
+      layer.images.forEach(image => {
+        // Move the image based on its speed
+        image.x -= layer.speed * (1/60); // Adjust for framerate
+      });
+      
+      // Get the leftmost and rightmost images
+      const sortedImages = [...layer.images].sort((a, b) => a.x - b.x);
+      const leftmost = sortedImages[0];
+      const rightmost = sortedImages[sortedImages.length - 1];
+      
+      // If the leftmost image has moved too far left
+      if (leftmost.x < -layer.width) {
+        // Place it to the right of the rightmost image
+        leftmost.x = rightmost.x + layer.width;
+      }
+    });
+  }
+  
   incrementScore() {
     if (!this.isGameOver) {
       this.score += 1;
@@ -94,6 +166,11 @@ class DinoRunScene extends Phaser.Scene {
       // Increase game speed over time
       if (this.score % 100 === 0) {
         this.gameSpeed += 20;
+        
+        // Update layer speeds when game speed changes
+        this.backgroundLayers.forEach((layer, index) => {
+          layer.speed = this.parallaxSpeeds[index] * this.gameSpeed;
+        });
       }
     }
   }
@@ -128,6 +205,15 @@ class DinoRunScene extends Phaser.Scene {
       }
     } catch (error) {
       console.error('Failed to submit score:', error);
+      
+      // Store score locally as a fallback
+      const localScores = JSON.parse(localStorage.getItem('dinoScores') || '[]');
+      localScores.push({
+        name: 'Player',
+        score: this.score,
+        date: new Date().toISOString()
+      });
+      localStorage.setItem('dinoScores', JSON.stringify(localScores));
     }
   }
 
@@ -151,17 +237,23 @@ class DinoRunScene extends Phaser.Scene {
   }
 
   update() {
-    // Jump only when on ground
-    if (this.jumpKey.isDown && this.player.body.touching.down && !this.isGameOver) {
-      this.player.setVelocityY(-500);
-    }
-    
-    // Handle game restart
-    if (this.isGameOver && this.jumpKey.isDown) {
-      this.scene.restart();
-      this.score = 0;
-      this.isGameOver = false;
-      this.gameSpeed = 200;
+    // Only update if game is not over
+    if (!this.isGameOver) {
+      // Update parallax layers
+      this.updateParallaxLayers();
+      
+      // Jump only when on ground
+      if (this.jumpKey.isDown && this.player.body.touching.down) {
+        this.player.setVelocityY(-500);
+      }
+    } else {
+      // Handle game restart
+      if (this.jumpKey.isDown) {
+        this.scene.restart();
+        this.score = 0;
+        this.isGameOver = false;
+        this.gameSpeed = 200;
+      }
     }
     
     // Remove obstacles that have gone off screen
@@ -171,61 +263,14 @@ class DinoRunScene extends Phaser.Scene {
       }
     });
   }
-}
-
-class MainMenuScene extends Phaser.Scene {
-  constructor() {
-    super({ key: 'MainMenuScene' });
-  }
   
-  preload() {
-    this.load.svg('sky', 'assets/sky.svg');
-  }
-  
-  create() {
-    // Add sky background
-    this.add.image(400, 300, 'sky').setDisplaySize(800, 600);
-    
-    // Title
-    this.add.text(400, 150, 'DINO RUN', { 
-      fontSize: '64px', 
-      fill: '#000',
-      fontStyle: 'bold'
-    }).setOrigin(0.5);
-    
-    // Play button
-    const playButton = this.add.text(400, 250, 'PLAY', { 
-      fontSize: '32px', 
-      fill: '#000',
-      backgroundColor: '#E0E0E0',
-      padding: { left: 20, right: 20, top: 10, bottom: 10 }
-    }).setOrigin(0.5).setInteractive();
-    
-    playButton.on('pointerdown', () => {
-      this.scene.start('DinoRunScene');
-    });
-    
-    // Leaderboard button
-    const leaderboardButton = this.add.text(400, 320, 'LEADERBOARD', { 
-      fontSize: '32px', 
-      fill: '#000',
-      backgroundColor: '#E0E0E0',
-      padding: { left: 20, right: 20, top: 10, bottom: 10 }
-    }).setOrigin(0.5).setInteractive();
-    
-    leaderboardButton.on('pointerdown', () => {
-      this.scene.start('LeaderboardScene');
-    });
-    
-    // Instructions
-    this.add.text(400, 400, 'Press SPACE to jump', { 
-      fontSize: '24px', 
-      fill: '#000' 
-    }).setOrigin(0.5);
-    
-    // Keyboard input as alternative
-    this.input.keyboard.addKey('SPACE').on('down', () => {
-      this.scene.start('DinoRunScene');
+  // New method to reset the game scene
+  resetScene() {
+    // Reset all layers to their original positions
+    this.backgroundLayers.forEach(layer => {
+      layer.images[0].x = layer.x - layer.width;
+      layer.images[1].x = layer.x;
+      layer.images[2].x = layer.x + layer.width;
     });
   }
 }
@@ -289,11 +334,95 @@ class LeaderboardScene extends Phaser.Scene {
       }
     } catch (error) {
       console.error('Failed to load leaderboard:', error);
-      this.add.text(400, 200, 'Could not load scores', { 
-        fontSize: '20px', 
-        fill: '#ff0000' 
-      }).setOrigin(0.5);
+      
+      // Try to load from localStorage as fallback
+      const localScores = JSON.parse(localStorage.getItem('dinoScores') || '[]');
+      localScores.sort((a, b) => b.score - a.score);
+      
+      const topScores = localScores.slice(0, 10);
+      topScores.forEach((scoreData, index) => {
+        this.add.text(400, 120 + (index * 35), 
+          `${index + 1}. ${scoreData.name}: ${scoreData.score}`, { 
+          fontSize: '20px', 
+          fill: '#000' 
+        }).setOrigin(0.5);
+      });
+      
+      if (localScores.length === 0) {
+        this.add.text(400, 200, 'Could not load scores from server', { 
+          fontSize: '20px', 
+          fill: '#ff0000' 
+        }).setOrigin(0.5);
+        
+        this.add.text(400, 230, 'No local scores available', { 
+          fontSize: '20px', 
+          fill: '#666' 
+        }).setOrigin(0.5);
+      }
     }
+  }
+}
+
+class MainMenuScene extends Phaser.Scene {
+  constructor() {
+    super({ key: 'MainMenuScene' });
+  }
+  
+  preload() {
+    this.load.svg('sky', 'assets/sky.svg');
+    this.load.svg('mountains', 'assets/mountains.svg');
+    this.load.svg('clouds', 'assets/clouds.svg');
+  }
+  
+  create() {
+    // Add sky background
+    this.add.image(400, 300, 'sky').setDisplaySize(800, 600);
+    
+    // Add some background elements for the menu - properly aligned
+    this.add.image(400, 470, 'mountains').setDisplaySize(800, 150);
+    this.add.image(400, 200, 'clouds').setDisplaySize(800, 100);
+    
+    // Title
+    this.add.text(400, 150, 'DINO RUN', { 
+      fontSize: '64px', 
+      fill: '#000',
+      fontStyle: 'bold'
+    }).setOrigin(0.5);
+    
+    // Play button
+    const playButton = this.add.text(400, 250, 'PLAY', { 
+      fontSize: '32px', 
+      fill: '#000',
+      backgroundColor: '#E0E0E0',
+      padding: { left: 20, right: 20, top: 10, bottom: 10 }
+    }).setOrigin(0.5).setInteractive();
+    
+    playButton.on('pointerdown', () => {
+      this.scene.start('DinoRunScene');
+    });
+    
+    // Leaderboard button
+    const leaderboardButton = this.add.text(400, 320, 'LEADERBOARD', { 
+      fontSize: '32px', 
+      fill: '#000',
+      backgroundColor: '#E0E0E0',
+      padding: { left: 20, right: 20, top: 10, bottom: 10 }
+    }).setOrigin(0.5).setInteractive();
+    
+    leaderboardButton.on('pointerdown', () => {
+      this.scene.start('LeaderboardScene');
+    });
+    
+    // Instructions
+    this.add.text(400, 400, 'Press SPACE to jump', { 
+      fontSize: '24px', 
+      fill: '#000' 
+    }).setOrigin(0.5);
+    
+    // Keyboard input as alternative
+    this.input.keyboard.addKey('SPACE').on('down', () => {
+      this.scene.start('DinoRunScene');
+    });
   }
 }
 
@@ -311,5 +440,5 @@ const config = {
   scene: [MainMenuScene, DinoRunScene, LeaderboardScene]
 };
 
-// If you're using script tags instead of modules, uncomment this line
+// If you're using script tags instead of modules, this line is needed
 const game = new Phaser.Game(config);
